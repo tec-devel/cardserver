@@ -11,10 +11,11 @@
 #include <Player.h>
 #include <stdlib.h>
 
-//#include <json/json.h>
+#include <json/json.h>
 
 
 #include <iostream>
+#include <sstream>
 
 //using namespace boost::property_tree;
 using namespace cardsrv;
@@ -32,164 +33,178 @@ void PlayerObject::method_get(std::vector<std::string> restful_data, std::string
 {
     std::cout << "PlayerObject::method_get" << std::endl;
 
-    const Player *player = GameController::instance()->player(atoi(restful_data[0].data()));
+    const Player *player = GameController::instance()->player(atoi(restful_data[1].data()));
 
-    if (responce)
+
+
+    //    {
+    //"players" : [
+    //	{"id": 1, "cards": 5, "status": "passive", "activity": "enabled"},
+    //	{"id": 2, "cards": 5, "status": "active", "activity": "enabled"},
+    //	{"id": 3, "cards": 5, "status": "active", "activity": "enabled"}
+    //	],
+    //
+    //"player": {
+    //	"status": "active",
+    //	"activity": "enabled",
+    //	"cards":["C6","C7","C8","C9","C10","CJ"]
+    //	},
+    //
+    //"table": {
+    //	"trump": "CA",
+    //	"slots": [
+    //		{"number": 1, "down": "S6", "up": "S7"},
+    //		{"number": 2, "down": "D7", "up": "D8"},
+    //		{"number": 3, "down": "H8", "up": "H9"}
+    //		]
+    //	}
+    //}
+
+
+
+    //if (responce)
     {
-        //        ptree root_t;
-        //        ptree player_t, players_t;
-        //        ptree slot_t, slots_t;
-        //        ptree cards_t;
-        //
-        //        BOOST_FOREACH(Player* tmp_player, player->table_players())
-        //        {
-        //            switch (player->status())
-        //            {
-        //            case Player::Active:
-        //                status = "active";
-        //                break;
-        //            case Player::Passive:
-        //                status = "passive";
-        //                break;
-        //            case Player::Neutral:
-        //                status = "neutral";
-        //                break;
-        //            }
-        //
-        //            switch (player->activity())
-        //            {
-        //            case Player::Enabled:
-        //                activity = "enabled";
-        //                break;
-        //            case Player::Disabled:
-        //                activity = "disabled";
-        //                break;
-        //            }
-        //
-        //            player_t.push_back(std::make_pair("status", status));
-        //            player_t.push_back(std::make_pair("activity", activity));
-        //            if (tmp_player == player)
-        //                player_t.push_back(std::make_pair("you", "true"));
-        //
-        //            players_t.add_child("", player_t);
-        //            player_t.clear();
-        //        }
-        //
-        //        root_t.push_back(std::make_pair("players", players_t));
-        //        std::string slot_status;
-        //        int slot_counter = 0;
-        //
-        //        BOOST_FOREACH(Slot* tmp_slot, player->table_slots())
-        //        {
-        //            switch (tmp_slot->status())
-        //            {
-        //            case Slot::Ok:
-        //                slot_status = "ok";
-        //                break;
-        //            case Slot::Wait:
-        //                slot_status = "wait";
-        //                break;
-        //            case Slot::Empty:
-        //                slot_status = "empty";
-        //                break;
-        //            }
-        //
-        //            slot_t.push_back(std::make_pair("number", slot_counter++));
-        //            slot_t.push_back(std::make_pair("status", slot_status));
-        //
-        //            BOOST_FOREACH(Card tmp_card, tmp_slot->cards())
-        //            {
-        //                cards_t.push_back(std::make_pair("", tmp_card.toString()));
-        //            }
-        //
-        //            slot_t.push_back(std::make_pair("cards", cards_t));
-        //            cards_t.clear();
-        //
-        //            slots_t.push_back(std::make_pair("", slot_t));
-        //            slot_t.clear();
-        //        }
-        //        root_t.push_back(std::make_pair("slots", slots_t));
-        //
-        //        write_json("test.json", players_t);
-        //
+        json_object * jobj = json_object_new_object();
 
-        std::string status, activity;
-//        json_object * jobj = json_object_new_object();
-//        json_object * jplayer = json_object_new_object();
+        json_object * jplayers_array = json_object_new_array();
+        json_object * jtable_player = 0;
+        json_object * jtable_player_id = 0;
+        json_object * jtable_player_cards = 0;
 
-        for (std::list<Player*>::iterator it = player->table_players().begin();
-             it != player->table_players().end();
-             ++it)
+        std::list<Player*> tmp_player_list = player->table_players();
+        
+        for (std::list<Player*>::const_iterator it = tmp_player_list.begin();
+                it != tmp_player_list.end();
+                ++it)
         {
-            switch (player->status())
+            json_object * jtable_player_status = 0;
+            json_object * jtable_player_activity = 0;
+            switch ((*it)->status())
             {
             case Player::Active:
-                status = "active";
+                jtable_player_status = json_object_new_string("active");
                 break;
             case Player::Passive:
-                status = "passive";
+                jtable_player_status = json_object_new_string("passive");
                 break;
             case Player::Neutral:
-                status = "neutral";
+                jtable_player_status = json_object_new_string("neutral");
                 break;
             }
 
-            switch (player->activity())
+            switch ((*it)->activity())
             {
             case Player::Enabled:
-                activity = "enabled";
+                jtable_player_activity = json_object_new_string("enabled");
                 break;
             case Player::Disabled:
-                activity = "disabled";
+                jtable_player_activity = json_object_new_string("disabled");
                 break;
-                //            }
             }
+
+            jtable_player = json_object_new_object();
+
+            jtable_player_id = json_object_new_int(-1);
+            jtable_player_cards = json_object_new_int((*it)->cards().size());
+
+            json_object_object_add(jtable_player, "id", jtable_player_id);
+            json_object_object_add(jtable_player, "cards", jtable_player_cards);
+            json_object_object_add(jtable_player, "status", jtable_player_status);
+            json_object_object_add(jtable_player, "activity", jtable_player_activity);
+
+            json_object_array_add(jplayers_array, jtable_player);
         }
 
-        /*Creating a json array*/
-//        json_object *jstatus = json_object_new_string(status.data());
-//        json_object *jactivity = json_object_new_string(activity.data());
-//
-//        json_object_object_add(jplayer, "status", jstatus);
-//        json_object_object_add(jplayer, "activity", jactivity);
-//
-//        json_object_object_add(jobj, "players", jplayer);
-//
-//        for (std::list<Player*>::iterator it = player.table_players().begin();
-//             it != player.table_players().end();
-//             ++it)
-//        {
-//            
-//        }
-//
-//
-//        /*Creating json strings*/
-//        json_object * jstring[3];
-//        jstring[0] = json_object_new_string("c");
-//        jstring[1] = json_object_new_string("c++");
-//        jstring[2] = json_object_new_string("php");
-//
-//        /*Adding the above created json strings to the array*/
-//        int i;
-//        for (i = 0; i < 3; i++)
-//        {
-//            json_object_array_put_idx(jarray, i + 2, jstring[i]);
-//        }
-//
-//        /*Form the json object*/
-//        json_object_object_add(jobj, "Categories", jarray);
-//
-//        /*Now printing the json object*/
-//        printf("The json object created: %sn", json_object_to_json_string(jobj));
+        json_object_object_add(jobj, "players", jplayers_array);
 
 
-        *responce = player->toString();
+        json_object * jplayer = json_object_new_object();
+        json_object * jplayer_status = 0; // json_object_new_string(player->status());
+        json_object * jplayer_activity = 0; // json_object_new_string();
+        json_object * jplayer_cards = json_object_new_array(); // json_object_new_string();
+        json_object * jplayer_one_card = 0; // json_object_new_string();
+
+
+        switch (player->status())
+        {
+        case Player::Active:
+            json_object_object_add(jplayer, "status", json_object_new_string("active"));
+            break;
+        case Player::Passive:
+            json_object_object_add(jplayer, "status", json_object_new_string("passive"));
+            break;
+        case Player::Neutral:
+            json_object_object_add(jplayer, "status", json_object_new_string("neutral"));
+            break;
+        }
+
+        switch (player->activity())
+        {
+        case Player::Enabled:
+            json_object_object_add(jplayer, "activity", json_object_new_string("enabled"));
+            break;
+        case Player::Disabled:
+            json_object_object_add(jplayer, "activity", json_object_new_string("disabled"));
+            break;
+        }
+
+
+        std::list<Card> tmp_card_list = player->cards();
+        for (std::list<Card>::const_iterator p_it = tmp_card_list.begin();
+                p_it != tmp_card_list.end();
+                ++p_it)
+        {
+            jplayer_one_card = json_object_new_string((*p_it).toString().data());
+            json_object_array_add(jplayer_cards, jplayer_one_card);
+        }
+
+        json_object_object_add(jplayer, "cards", jplayer_cards);
+        json_object_object_add(jobj, "player", jplayer);
+
+        json_object * jtable = json_object_new_object();
+        json_object * jtable_trump = json_object_new_int(player->table_trump());
+        json_object * jtable_slots = json_object_new_array();
+        json_object * jtable_slot = 0;
+
+        int i = 0;
+        std::list<Slot*> tmp_slot_list = player->table_slots();
+        for (std::list<Slot*>::const_iterator s_it = tmp_slot_list.begin();
+                s_it != tmp_slot_list.end();
+                ++s_it, i++)
+        {
+            jtable_slot = json_object_new_object();
+            json_object_object_add(jtable_slot, "number", json_object_new_int(i));
+
+            if ((*s_it)->cards().size() == 1)
+                json_object_object_add(jtable_slot, "up", json_object_new_string((*s_it)->cards()[0].toString().data()));
+
+            if ((*s_it)->cards().size() == 2)
+                json_object_object_add(jtable_slot, "down", json_object_new_string((*s_it)->cards()[1].toString().data()));
+
+            json_object_array_add(jtable_slots, jtable_slot);
+        }
+
+        json_object_object_add(jtable, "trump", jtable_trump);
+        json_object_object_add(jtable, "slots", jtable_slots);
+
+        json_object_object_add(jobj, "table", jtable);
+
+        responce->append(json_object_to_json_string(jobj));
     }
 }
 
-void PlayerObject::method_post(std::vector<std::string> restful_data, std::string*, std::string*)
+void PlayerObject::method_post(std::vector<std::string> restful_data, std::string*, std::string* responce)
 {
-    GameController::instance()->addPlayerToTable(atoi(restful_data[0].data()), atoi(restful_data[1].data()));
+
+    if (restful_data.size() == 3)
+    {
+        bool result = GameController::instance()->addPlayerToTable(atoi(restful_data[1].data()), atoi(restful_data[2].data()));
+    
+        json_object * jobj = json_object_new_object();
+
+        json_object_object_add(jobj, "status", json_object_new_int((int)result));
+        responce->append(json_object_to_json_string(jobj));
+    }
 }
 
 void PlayerObject::method_put(std::vector<std::string>, std::string*, std::string*)

@@ -9,6 +9,8 @@
 
 #include <Table.h>
 
+#include <iostream>
+
 GameController* GameController::m_game_controller = 0;
 
 GameController::GameController()
@@ -57,14 +59,15 @@ bool GameController::addPlayerToTable(int player_id, int table_id)
     std::map<int, cardsrv::Table*>::iterator it;
     if ((it = m_tables.find(table_id)) != m_tables.end())
         table = (*it).second;
-    
+
     cardsrv::Player *player = 0;
-    if(table)
+    if (table)
     {
         player = table->addPlayer(player_id);
-        m_players.insert(std::make_pair(player_id, player));
+        if (player)
+            m_players.insert(std::make_pair(player_id, player));
     }
-    
+
     return (bool)player;
 }
 
@@ -74,7 +77,7 @@ const cardsrv::Player* GameController::player(int player_id) const
     std::map<int, cardsrv::Player*>::const_iterator it;
     if ((it = m_players.find(player_id)) != m_players.end())
         player = (*it).second;
-    
+
     return player;
 }
 

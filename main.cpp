@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-//#include<uriparser/Uri.h>
+#include<uriparser/Uri.h>
 
 #include "NetworkController.h"
 
@@ -23,26 +23,26 @@
 
 static std::vector<std::string> parseRestfulData(const char * url)
 {
-//    UriParserStateA state;
-//    UriUriA uri;
-//
-//    state.uri = &uri;
-//    if (uriParseUriA(&state, url) != URI_SUCCESS)
-//    {
-//        /* Failure */
-//        uriFreeUriMembersA(&uri);
-//    }
-//
-//    std::stringstream test(uri.pathHead->text.first);
-//    std::string segment;
+    UriParserStateA state;
+    UriUriA uri;
+
+    state.uri = &uri;
+    if (uriParseUriA(&state, url) != URI_SUCCESS)
+    {
+        /* Failure */
+        uriFreeUriMembersA(&uri);
+    }
+
+    std::stringstream test(uri.pathHead->text.first);
+    std::string segment;
     std::vector<std::string> seglist;
-//
-//    while (std::getline(test, segment, '/'))
-//    {
-//        seglist.push_back(segment);
-//    }
-//
-//    uriFreeUriMembersA(&uri);
+
+    while (std::getline(test, segment, '/'))
+    {
+        seglist.push_back(segment);
+    }
+
+    uriFreeUriMembersA(&uri);
 
     return seglist;
 }
@@ -57,7 +57,7 @@ static int ahc_echo(void * cls,
                     void ** ptr)
 {
     static int dummy;
-    const char * page = (const char*)cls;
+    const char * page = (const char*) cls;
     struct MHD_Response * response;
     int ret;
 
@@ -76,23 +76,24 @@ static int ahc_echo(void * cls,
             return MHD_NO; /* upload data in a GET!? */
         *ptr = NULL; /* clear context pointer */
 
-        response = MHD_create_response_from_data(strlen(page),
-                                                 (void*) page,
-                                                 MHD_NO,
-                                                 MHD_NO);
-        
-        
-        MHD_add_response_header(response, SOP_HEADER, "*\0");
+
+
+
+        //        MHD_add_response_header(response, SOP_HEADER, "*\0");
 
         std::vector<std::string> seglist = parseRestfulData(url);
 
         if (!seglist.empty())
         {
-            NetworkController::instance()->methodGet(seglist[0], seglist);
+            std::string reply;
+            NetworkController::instance()->methodGet(seglist[0], seglist, 0, &reply);
+            response = MHD_create_response_from_data(reply.size(), (void*) reply.data(), MHD_NO, MHD_NO);
             ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+            std::cout<< reply << std::endl;
         }
         else
         {
+            response = MHD_create_response_from_data(strlen(page), (void*) page, MHD_NO, MHD_NO);
             ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
         }
 
@@ -110,16 +111,78 @@ static int ahc_echo(void * cls,
         }
 
         *ptr = NULL; /* clear context pointer */
-        
+
         std::vector<std::string> restful_data = parseRestfulData(url);
-        
-        if(!restful_data.empty())
+
+        if (!restful_data.empty())
         {
-            NetworkController::instance()->methodPost(restful_data[0], restful_data);
+            std::string reply;
+            NetworkController::instance()->methodPost(restful_data[0], restful_data, 0, &reply);
+
+            response = MHD_create_response_from_data(reply.size(), (void*) reply.data(), MHD_NO, MHD_NO);
+            std::cout << "RESPONCE " << reply << std::endl;
+            ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
         }
-        
+        else
+        {
+            response = MHD_create_response_from_data(strlen(page), (void*) 0, MHD_NO, MHD_NO);
+            ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
+        }
+
+        MHD_destroy_response(response);
+    }
+    else if (strcmp(method, "PUT") == 0)
+    {
+        if (&dummy != *ptr)
+        {
+            /* The first time only the headers are valid,
+               do not respond in the first round... */
+            *ptr = &dummy;
+            return MHD_YES;
+        }
+
+        *ptr = NULL; /* clear context pointer */
         response = MHD_create_response_from_data(strlen(page), (void*) 0, MHD_NO, MHD_NO);
-        ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+
+        std::vector<std::string> restful_data = parseRestfulData(url);
+
+        if (!restful_data.empty())
+        {
+            NetworkController::instance()->methodPut(restful_data[0], restful_data);
+            ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+        }
+        else
+        {
+            ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
+        }
+
+        MHD_destroy_response(response);
+    }
+    else if (strcmp(method, "DELETE") == 0)
+    {
+        if (&dummy != *ptr)
+        {
+            /* The first time only the headers are valid,
+               do not respond in the first round... */
+            *ptr = &dummy;
+            return MHD_YES;
+        }
+
+        *ptr = NULL; /* clear context pointer */
+        response = MHD_create_response_from_data(strlen(page), (void*) 0, MHD_NO, MHD_NO);
+
+        std::vector<std::string> restful_data = parseRestfulData(url);
+
+        if (!restful_data.empty())
+        {
+            NetworkController::instance()->methodDelete(restful_data[0], restful_data);
+            ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+        }
+        else
+        {
+            ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
+        }
+
         MHD_destroy_response(response);
     }
     else
@@ -148,7 +211,7 @@ int main(int argc,
                          NULL,
                          NULL,
                          &ahc_echo,
-                         (void*)PAGE,
+                         (void*) PAGE,
                          MHD_OPTION_END);
 
     if (d == NULL)
