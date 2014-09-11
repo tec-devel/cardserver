@@ -1,0 +1,22 @@
+{
+"players" : [
+	{"id": 1, "cards": 5, "status": "passive", "activity": "enabled"},
+	{"id": 2, "cards": 5, "status": "active", "activity": "enabled"},
+	{"id": 3, "cards": 5, "status": "active", "activity": "enabled"}
+	],
+
+"player": {
+	"status": "active",
+	"activity": "enabled",
+	"cards":["C6","C7","C8","C9","C10","CJ"]
+	},
+
+"table": {
+	"trump": "CA",
+	"table": [
+		{"number": 1, "down": "S6", "up": "S7"},
+		{"number": 2, "down": "D7", "up": "D8"},
+		{"number": 3, "down": "H8", "up": "H9"}
+		]
+	}
+}
