@@ -16,6 +16,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <json/json_object.h>
+#include <string.h>
 
 //using namespace boost::property_tree;
 using namespace cardsrv;
@@ -29,11 +31,11 @@ PlayerObject::~PlayerObject()
 {
 }
 
-void PlayerObject::method_get(std::vector<std::string> restful_data, std::string*, std::string* responce)
+void PlayerObject::method_get(std::vector<std::string> restful_data, const std::string&, std::string* responce)
 {
     std::cout << "PlayerObject::method_get" << std::endl;
 
-    const Player *player = GameController::instance()->player(atoi(restful_data[1].data()));
+    const Player *player = GameController::instance()->const_player(atoi(restful_data[1].data()));
 
 
 
@@ -72,7 +74,7 @@ void PlayerObject::method_get(std::vector<std::string> restful_data, std::string
         json_object * jtable_player_cards = 0;
 
         std::list<Player*> tmp_player_list = player->table_players();
-        
+
         for (std::list<Player*>::const_iterator it = tmp_player_list.begin();
                 it != tmp_player_list.end();
                 ++it)
@@ -117,13 +119,9 @@ void PlayerObject::method_get(std::vector<std::string> restful_data, std::string
 
         json_object_object_add(jobj, "players", jplayers_array);
 
-
         json_object * jplayer = json_object_new_object();
-        json_object * jplayer_status = 0; // json_object_new_string(player->status());
-        json_object * jplayer_activity = 0; // json_object_new_string();
         json_object * jplayer_cards = json_object_new_array(); // json_object_new_string();
         json_object * jplayer_one_card = 0; // json_object_new_string();
-
 
         switch (player->status())
         {
@@ -193,25 +191,100 @@ void PlayerObject::method_get(std::vector<std::string> restful_data, std::string
     }
 }
 
-void PlayerObject::method_post(std::vector<std::string> restful_data, std::string*, std::string* responce)
+void PlayerObject::method_post(std::vector<std::string> restful_data, const std::string&, std::string* responce)
 {
-
     if (restful_data.size() == 3)
     {
         bool result = GameController::instance()->addPlayerToTable(atoi(restful_data[1].data()), atoi(restful_data[2].data()));
-    
-        json_object * jobj = json_object_new_object();
 
-        json_object_object_add(jobj, "status", json_object_new_int((int)result));
+        json_object * jobj = json_object_new_object();
+        json_object_object_add(jobj, "status", json_object_new_int((int) result));
+
+        if (result)
+        {
+            cardsrv::Player *player = GameController::instance()->player(atoi(restful_data[1].data()));
+            if (player)
+                json_object_object_add(jobj, "token", json_object_new_string(player->genToken().data()));
+        }
+
         responce->append(json_object_to_json_string(jobj));
     }
 }
 
-void PlayerObject::method_put(std::vector<std::string>, std::string*, std::string*)
+void PlayerObject::method_put(std::vector<std::string> restful_data, const std::string& request, std::string* responce)
 {
+//{
+//    "turn" : { "token": "1", "slot" : 1, "card" : "S6"}
+//}
+
+    if (!request.empty())
+    {
+        json_object * jobj = json_tokener_parse(request.data());
+
+        int slot_number = -1;
+        std::string card;
+        std::string token;
+
+        enum json_type type, turn_type;
+
+        json_object_object_foreach(jobj, key, val)
+        {
+            type = json_object_get_type(val);
+            switch (type)
+            {
+            case json_type_object:
+                json_object_object_foreach(val, key1, val1)
+            {
+                turn_type = json_object_get_type(val1);
+                switch (turn_type)
+                {
+                case json_type_int:
+                    slot_number = json_object_get_int(val1);
+                    break;
+                case json_type_string:
+                    if (strcmp(key1, "card") == 0)
+                        card.append(json_object_get_string(val1));
+                    else if (strcmp(key1, "token") == 0)
+                        token.append(json_object_get_string(val1));
+                    break;
+                }
+            }
+                break;
+            }
+        }
+
+        if (slot_number != -1 && !card.empty())
+        {
+            cardsrv::Player* player = GameController::instance()->player(atoi(restful_data[1].data()));
+
+            if (player)
+            {
+                std::list<cardsrv::Card> turn_list;
+                cardsrv::Card turn_card = cardsrv::Card::fromString(card);
+                turn_list.push_back(turn_card);
+
+                // todo: token!!!
+                // todo: проверять, есть ли такая карта у игрока!
+                
+                cardsrv::Player::TurnStatus status = player->turnFromClient(turn_list, token, slot_number);
+
+                json_object * jobj = json_object_new_object();
+                switch (status)
+                {
+                case cardsrv::Player::Success:
+                    json_object_object_add(jobj, "status", json_object_new_string("success"));
+                    break;
+                case cardsrv::Player::Fail:
+                    json_object_object_add(jobj, "status", json_object_new_string("fail"));
+                    break;
+                }
+                responce->append(json_object_to_json_string(jobj));
+            }
+        }
+    }
 }
 
-void PlayerObject::method_delete(std::vector<std::string>, std::string*, std::string*)
+void PlayerObject::method_delete(std::vector<std::string>, const std::string&, std::string*)
 {
 }
 

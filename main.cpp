@@ -86,10 +86,11 @@ static int ahc_echo(void * cls,
         if (!seglist.empty())
         {
             std::string reply;
-            NetworkController::instance()->methodGet(seglist[0], seglist, 0, &reply);
+            std::string request;
+            NetworkController::instance()->methodGet(seglist[0], seglist, request, &reply);
             response = MHD_create_response_from_data(reply.size(), (void*) reply.data(), MHD_NO, MHD_NO);
             ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-            std::cout<< reply << std::endl;
+            std::cout << reply << std::endl;
         }
         else
         {
@@ -117,7 +118,8 @@ static int ahc_echo(void * cls,
         if (!restful_data.empty())
         {
             std::string reply;
-            NetworkController::instance()->methodPost(restful_data[0], restful_data, 0, &reply);
+            std::string request;
+            NetworkController::instance()->methodPost(restful_data[0], restful_data, request, &reply);
 
             response = MHD_create_response_from_data(reply.size(), (void*) reply.data(), MHD_NO, MHD_NO);
             std::cout << "RESPONCE " << reply << std::endl;
@@ -148,7 +150,13 @@ static int ahc_echo(void * cls,
 
         if (!restful_data.empty())
         {
-            NetworkController::instance()->methodPut(restful_data[0], restful_data);
+            std::string upload_data_str;
+            std::string reply;
+
+            if (upload_data)
+                upload_data_str.append(upload_data);
+
+            NetworkController::instance()->methodPut(restful_data[0], restful_data, upload_data_str, &reply);
             ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
         }
         else

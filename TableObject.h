@@ -16,10 +16,10 @@ public:
     TableObject(const std::string& name);
     virtual ~TableObject();
     
-    virtual void method_get(std::vector<std::string>, std::string *request = 0, std::string *responce = 0);
-    virtual void method_post(std::vector<std::string>, std::string *request = 0, std::string *responce = 0);
-    virtual void method_put(std::vector<std::string>, std::string *request = 0, std::string *responce = 0);
-    virtual void method_delete(std::vector<std::string>, std::string *request = 0, std::string *responce = 0);
+    virtual void method_get(std::vector<std::string>,  const std::string& request = std::string(), std::string *responce = 0);
+    virtual void method_post(std::vector<std::string>,  const std::string& request = std::string(), std::string *responce = 0);
+    virtual void method_put(std::vector<std::string>,  const std::string& request = std::string(), std::string *responce = 0);
+    virtual void method_delete(std::vector<std::string>,  const std::string& request = std::string(), std::string *responce = 0);
     
 private:
 

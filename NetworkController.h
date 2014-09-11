@@ -34,10 +34,10 @@ public:
     
     void registerObject(RestfulObject* object);
     
-    void methodGet(std::string object, const std::vector<std::string>&, std::string *request = 0, std::string *reply = 0);
-    void methodPost(std::string object, const std::vector<std::string>&, std::string *request = 0, std::string *reply = 0);
-    void methodPut(std::string object, const std::vector<std::string>&, std::string *request = 0, std::string *reply = 0);
-    void methodDelete(std::string object, const std::vector<std::string>&, std::string *request = 0, std::string *reply = 0);
+    void methodGet(std::string object, const std::vector<std::string>&, const std::string& request = std::string(), std::string *reply = 0);
+    void methodPost(std::string object, const std::vector<std::string>&, const std::string& request = std::string(), std::string *reply = 0);
+    void methodPut(std::string object, const std::vector<std::string>&, const std::string& request = std::string(), std::string *reply = 0);
+    void methodDelete(std::string object, const std::vector<std::string>&, const std::string& request = std::string(), std::string *reply = 0);
 
 };
 

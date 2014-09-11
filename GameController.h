@@ -33,7 +33,8 @@ public:
     cardsrv::Table* removeTable(int id);
     
     bool addPlayerToTable(int player_id, int table_id);
-    const cardsrv::Player* player(int player_id) const;
+    const cardsrv::Player* const_player(int player_id) const;
+    cardsrv::Player* player(int player_id) const;
     cardsrv::Player* removePlayerFromTable(int id);
 
     virtual ~GameController();

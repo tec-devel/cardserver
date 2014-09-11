@@ -23,12 +23,12 @@ TableObject::~TableObject()
 {
 }
 
-void TableObject::method_get(std::vector<std::string>, std::string*, std::string*)
+void TableObject::method_get(std::vector<std::string>, const std::string&, std::string*)
 {
     std::cout << "TableObject::method_get" << std::endl;
 }
 
-void TableObject::method_post(std::vector<std::string> restful_data, std::string*, std::string* responce)
+void TableObject::method_post(std::vector<std::string> restful_data, const std::string&, std::string* responce)
 {
     if (!restful_data.empty())
     {
@@ -42,11 +42,11 @@ void TableObject::method_post(std::vector<std::string> restful_data, std::string
     }
 }
 
-void TableObject::method_put(std::vector<std::string>, std::string*, std::string*)
+void TableObject::method_put(std::vector<std::string>, const std::string&, std::string*)
 {
 }
 
-void TableObject::method_delete(std::vector<std::string> restful_data, std::string*, std::string*)
+void TableObject::method_delete(std::vector<std::string> restful_data, const std::string&, std::string*)
 {
     if (!restful_data.empty())
     {
