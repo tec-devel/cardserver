@@ -7,6 +7,7 @@
 
 #include "TableObject.h"
 
+#include <AbstractTable.h>
 #include <Table.h>
 #include "GameController.h"
 #include <stdlib.h>
@@ -32,7 +33,7 @@ void TableObject::method_post(std::vector<std::string> restful_data, const std::
 {
     if (!restful_data.empty())
     {
-        cardsrv::Table *table = new cardsrv::Table(atoi(restful_data[1].data()));
+        cardsrv::AbstractTable *table = new cardsrv::Table(atoi(restful_data[1].data()));
         GameController::instance()->addTable(table);
         
         json_object * jobj = json_object_new_object();
@@ -50,7 +51,7 @@ void TableObject::method_delete(std::vector<std::string> restful_data, const std
 {
     if (!restful_data.empty())
     {
-        cardsrv::Table *table = GameController::instance()->removeTable(atoi(restful_data[0].data()));
+        cardsrv::AbstractTable *table = GameController::instance()->removeTable(atoi(restful_data[0].data()));
         if (table)
             delete table;
     }

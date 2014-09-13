@@ -9,15 +9,15 @@
 #define	GAMECONTROLLER_H
 
 namespace cardsrv {
-    class Player;
-    class Table;
+    class AbstractPlayer;
+    class AbstractTable;
 }
 
 #include <map>
 
 class GameController {
-    std::map <int, cardsrv::Table*> m_tables;
-    std::map <int, cardsrv::Player*> m_players;
+    std::map <int, cardsrv::AbstractTable*> m_tables;
+    std::map <int, cardsrv::AbstractPlayer*> m_players;
     GameController();
     static GameController* m_game_controller;
 public:
@@ -28,14 +28,14 @@ public:
         return m_game_controller;
     }
     
-    int addTable(cardsrv::Table*);
-    const  cardsrv::Table* table(int id) const;
-    cardsrv::Table* removeTable(int id);
+    int addTable(cardsrv::AbstractTable*);
+    const  cardsrv::AbstractTable* table(int id) const;
+    cardsrv::AbstractTable* removeTable(int id);
     
     bool addPlayerToTable(int player_id, int table_id);
-    const cardsrv::Player* const_player(int player_id) const;
-    cardsrv::Player* player(int player_id) const;
-    cardsrv::Player* removePlayerFromTable(int id);
+    const cardsrv::AbstractPlayer* const_player(int player_id) const;
+    cardsrv::AbstractPlayer* player(int player_id) const;
+    cardsrv::AbstractPlayer* removePlayerFromTable(int id);
 
     virtual ~GameController();
 private:

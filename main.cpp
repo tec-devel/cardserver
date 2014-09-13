@@ -120,9 +120,8 @@ static int ahc_echo(void * cls,
             std::string reply;
             std::string request;
             NetworkController::instance()->methodPost(restful_data[0], restful_data, request, &reply);
-
+            std::cout << "POST RESPONCE " << reply << std::endl;
             response = MHD_create_response_from_data(reply.size(), (void*) reply.data(), MHD_NO, MHD_NO);
-            std::cout << "RESPONCE " << reply << std::endl;
             ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
         }
         else
@@ -144,7 +143,6 @@ static int ahc_echo(void * cls,
         }
 
         *ptr = NULL; /* clear context pointer */
-        response = MHD_create_response_from_data(strlen(page), (void*) 0, MHD_NO, MHD_NO);
 
         std::vector<std::string> restful_data = parseRestfulData(url);
 
@@ -157,10 +155,13 @@ static int ahc_echo(void * cls,
                 upload_data_str.append(upload_data);
 
             NetworkController::instance()->methodPut(restful_data[0], restful_data, upload_data_str, &reply);
+            std::cout << "PUT RESPONCE " << reply << std::endl;
+            response = MHD_create_response_from_data(reply.size(), (void*) reply.data(), MHD_NO, MHD_NO);
             ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
         }
         else
         {
+            response = MHD_create_response_from_data(0, (void*) 0, MHD_NO, MHD_NO);
             ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
         }
 
