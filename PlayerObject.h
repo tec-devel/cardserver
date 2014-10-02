@@ -12,11 +12,7 @@
 
 class PlayerObject : public RestfulObject {
 
-    enum ResfulData {
-        ObjectName = 0,
-        PlayerId,
-        PlayerToken
-    };
+
 
 public:
 

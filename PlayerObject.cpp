@@ -33,9 +33,13 @@ void PlayerObject::method_get(std::vector<std::string> restful_data, const std::
 
     if (restful_data.size() == 3)
     {
-        const AbstractPlayer *player = GameController::instance()->const_player(atoi(restful_data[PlayerId].data()));
-        if (player && player->tokenGet() == restful_data[PlayerToken])
+        AbstractPlayer *player = GameController::instance()->player(atoi(restful_data[AbstractPlayer::PlayerId].data()));
+        if (player && player->tokenGet() == restful_data[AbstractPlayer::PlayerToken])
+        {
             player->get(restful_data, *responce);
+            std::string get_token = "1";
+            player->setGetToken(get_token);
+        }
     }
 }
 
@@ -61,25 +65,31 @@ void PlayerObject::method_post(std::vector<std::string> restful_data, const std:
                 json_object_object_add(jobj, "get_token", json_object_new_string(get_token.data()));
                 player->setPutToken(put_token);
                 json_object_object_add(jobj, "put_token", json_object_new_string(put_token.data()));
+
             }
         }
+
+        responce->append(json_object_to_json_string(jobj));
     }
 
-    if (responce->empty())
-        json_object_object_add(jobj, "status", json_object_new_int((int) false));
+    //    if (responce->empty())
+    //        json_object_object_add(jobj, "status", json_object_new_int((int) false));
 
-    responce->append(json_object_to_json_string(jobj));
 }
 
 void PlayerObject::method_put(std::vector<std::string> restful_data, const std::string& request, std::string* responce)
 {
     std::cout << "PlayerObject::method_put" << std::endl;
 
-    if (restful_data.size() == 3)
+    if (restful_data.size() == 4)
     {
-        AbstractPlayer *player = GameController::instance()->player(atoi(restful_data[PlayerId].data()));
-        if (player && player->tokenPut() == restful_data[PlayerToken])
+        AbstractPlayer *player = GameController::instance()->player(atoi(restful_data[AbstractPlayer::PlayerId].data()));
+        if (player && player->tokenPut() == restful_data[AbstractPlayer::PlayerToken])
+        {
             player->put(restful_data, request, *responce);
+            std::string put_token = "2";
+            player->setPutToken(put_token);
+        }
     }
 }
 

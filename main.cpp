@@ -215,13 +215,21 @@ int main(int argc,
     NetworkController::instance()->registerObject(new PlayerObject(std::string("player")));
     NetworkController::instance()->registerObject(new TableObject(std::string("table")));
 
-    d = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION,
+    d = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY,
                          atoi(argv[1]),
                          NULL,
                          NULL,
                          &ahc_echo,
                          (void*) PAGE,
                          MHD_OPTION_END);
+    
+//        d = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION,
+//                         atoi(argv[1]),
+//                         NULL,
+//                         NULL,
+//                         &ahc_echo,
+//                         (void*) PAGE,
+//                         MHD_OPTION_END);
 
     if (d == NULL)
         return 1;
