@@ -21,6 +21,11 @@
 #include <iostream>
 #include <sstream>
 
+struct PutData
+{
+    std::string reply;
+};
+
 static std::vector<std::string> parseRestfulData(const char * url)
 {
     UriParserStateA state;
@@ -61,6 +66,8 @@ static int ahc_echo(void * cls,
     struct MHD_Response * response;
     int ret;
 
+    static PutData pd;
+
     if (strcmp(method, "GET") == 0)
     {
         if (&dummy != *ptr)
@@ -71,13 +78,9 @@ static int ahc_echo(void * cls,
             return MHD_YES;
         }
 
-
         if (0 != *upload_data_size)
             return MHD_NO; /* upload data in a GET!? */
         *ptr = NULL; /* clear context pointer */
-
-
-
 
         //        MHD_add_response_header(response, SOP_HEADER, "*\0");
 
@@ -103,68 +106,72 @@ static int ahc_echo(void * cls,
     }
     else if (strcmp(method, "POST") == 0)
     {
-        if (&dummy != *ptr)
+        if (&pd != *ptr)
         {
             /* The first time only the headers are valid,
                do not respond in the first round... */
-            *ptr = &dummy;
+            *ptr = &pd;
+            return MHD_YES;
+        }
+
+        if (0 != *upload_data_size)
+        {
+            std::vector<std::string> restful_data = parseRestfulData(url);
+            if (!restful_data.empty())
+            {
+                std::string request;
+                NetworkController::instance()->methodPost(restful_data[0], restful_data, request, &pd.reply);
+                std::cout << "POST RESPONCE " << pd.reply << std::endl;
+            }
+
+            *upload_data_size = 0;
+
             return MHD_YES;
         }
 
         *ptr = NULL; /* clear context pointer */
 
-        std::vector<std::string> restful_data = parseRestfulData(url);
+        response = MHD_create_response_from_data(pd.reply.size(), (void*) pd.reply.data(), MHD_NO, MHD_YES);
+        ret = MHD_queue_response(connection, MHD_HTTP_OK, response);        
 
-        if (!restful_data.empty())
-        {
-            std::string reply;
-            std::string request;
-            NetworkController::instance()->methodPost(restful_data[0], restful_data, request, &reply);
-            std::cout << "POST RESPONCE " << reply << std::endl;
-            response = MHD_create_response_from_data(reply.size(), (void*) reply.data(), MHD_NO, MHD_NO);
-            ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-        }
-        else
-        {
-            response = MHD_create_response_from_data(strlen(page), (void*) 0, MHD_NO, MHD_NO);
-            ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
-        }
-
+        pd.reply.clear();
         MHD_destroy_response(response);
     }
     else if (strcmp(method, "PUT") == 0)
     {
-        if (&dummy != *ptr)
+        if (&pd != *ptr)
         {
             /* The first time only the headers are valid,
                do not respond in the first round... */
-            *ptr = &dummy;
+            *ptr = &pd;
+            return MHD_YES;
+        }
+
+        if (0 != *upload_data_size)
+        {
+            std::vector<std::string> restful_data = parseRestfulData(url);
+
+            if (!restful_data.empty())
+            {
+                std::string upload_data_str;
+
+                if (upload_data)
+                    upload_data_str.append(upload_data, *upload_data_size);
+
+                NetworkController::instance()->methodPut(restful_data[0], restful_data, upload_data_str, &pd.reply);
+                std::cout << "PUT RESPONCE " << pd.reply << std::endl;
+            }
+
+            *upload_data_size = 0;
             return MHD_YES;
         }
 
         *ptr = NULL; /* clear context pointer */
 
-        std::vector<std::string> restful_data = parseRestfulData(url);
-
-        if (!restful_data.empty())
-        {
-            std::string upload_data_str;
-            std::string reply;
-
-            if (upload_data)
-                upload_data_str.append(upload_data);
-
-            NetworkController::instance()->methodPut(restful_data[0], restful_data, upload_data_str, &reply);
-            std::cout << "PUT RESPONCE " << reply << std::endl;
-            response = MHD_create_response_from_data(reply.size(), (void*) reply.data(), MHD_NO, MHD_NO);
-            ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-        }
-        else
-        {
-            response = MHD_create_response_from_data(0, (void*) 0, MHD_NO, MHD_NO);
-            ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
-        }
-
+        response = MHD_create_response_from_data(pd.reply.size(), (void*) pd.reply.data(), MHD_NO, MHD_YES);
+        ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+                        
+        pd.reply.clear();
         MHD_destroy_response(response);
     }
     else if (strcmp(method, "DELETE") == 0)
@@ -222,14 +229,14 @@ int main(int argc,
                          &ahc_echo,
                          (void*) PAGE,
                          MHD_OPTION_END);
-    
-//        d = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION,
-//                         atoi(argv[1]),
-//                         NULL,
-//                         NULL,
-//                         &ahc_echo,
-//                         (void*) PAGE,
-//                         MHD_OPTION_END);
+
+    //        d = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION,
+    //                         atoi(argv[1]),
+    //                         NULL,
+    //                         NULL,
+    //                         &ahc_echo,
+    //                         (void*) PAGE,
+    //                         MHD_OPTION_END);
 
     if (d == NULL)
         return 1;
