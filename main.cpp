@@ -68,6 +68,7 @@ static int ahc_echo(void * cls,
 
     static PutData pd;
 
+
     if (strcmp(method, "GET") == 0)
     {
         if (&dummy != *ptr)
@@ -84,6 +85,7 @@ static int ahc_echo(void * cls,
 
         //        MHD_add_response_header(response, SOP_HEADER, "*\0");
 
+        std::cout << "GET " << url << std::endl;
         std::vector<std::string> seglist = parseRestfulData(url);
 
         if (!seglist.empty())
@@ -116,6 +118,7 @@ static int ahc_echo(void * cls,
 
         if (0 != *upload_data_size)
         {
+            std::cout << "POST " << url << std::endl;
             std::vector<std::string> restful_data = parseRestfulData(url);
             if (!restful_data.empty())
             {
@@ -132,7 +135,7 @@ static int ahc_echo(void * cls,
         *ptr = NULL; /* clear context pointer */
 
         response = MHD_create_response_from_data(pd.reply.size(), (void*) pd.reply.data(), MHD_NO, MHD_YES);
-        ret = MHD_queue_response(connection, MHD_HTTP_OK, response);        
+        ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
 
         pd.reply.clear();
         MHD_destroy_response(response);
@@ -149,6 +152,7 @@ static int ahc_echo(void * cls,
 
         if (0 != *upload_data_size)
         {
+            std::cout << "PUT " << url << std::endl;
             std::vector<std::string> restful_data = parseRestfulData(url);
 
             if (!restful_data.empty())
@@ -170,7 +174,7 @@ static int ahc_echo(void * cls,
 
         response = MHD_create_response_from_data(pd.reply.size(), (void*) pd.reply.data(), MHD_NO, MHD_YES);
         ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-                        
+
         pd.reply.clear();
         MHD_destroy_response(response);
     }
@@ -187,6 +191,7 @@ static int ahc_echo(void * cls,
         *ptr = NULL; /* clear context pointer */
         response = MHD_create_response_from_data(strlen(page), (void*) 0, MHD_NO, MHD_NO);
 
+        std::cout << "DELETE " << url << std::endl;
         std::vector<std::string> restful_data = parseRestfulData(url);
 
         if (!restful_data.empty())
