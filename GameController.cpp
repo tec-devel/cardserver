@@ -39,6 +39,11 @@ const cardsrv::AbstractTable* GameController::table(int id) const
     return ret_table;
 }
 
+std::map <int, cardsrv::AbstractTable*> GameController::tables() const
+{
+    return m_tables;
+}
+
 cardsrv::AbstractTable* GameController::removeTable(int id)
 {
     cardsrv::AbstractTable* ret_table = 0;
@@ -50,6 +55,16 @@ cardsrv::AbstractTable* GameController::removeTable(int id)
         ret_table = (*it).second;
 
         // todo: delete players!
+
+
+        for (std::list <cardsrv::AbstractPlayer*>::iterator player_it = ret_table->players().begin();
+                player_it != ret_table->players().end();
+                ++player_it)
+        {
+            std::map<int, cardsrv::AbstractPlayer*>::iterator map_it = m_players.find((*player_it)->id());
+            if (map_it != m_players.end())
+                m_players.erase(map_it);
+        }
 
         m_tables.erase(it);
     }
@@ -74,9 +89,9 @@ bool GameController::addPlayerToTable(int player_id, int table_id)
         player = table->addPlayer(player_id);
         if (player)
             m_players.insert(std::make_pair(player_id, player));
-        
-        if(table->isFull())
-           table->startGame(); 
+
+        if (table->isFull())
+            table->startGame();
     }
 
     return (bool)player;

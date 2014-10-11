@@ -10,9 +10,12 @@ set (SOURCES
 	PlayerObject.cpp
 	RestfulObject.cpp
 	TableObject.cpp
+	TablesObject.cpp
 	main.cpp)
 
 add_executable(cardserver ${SOURCES})
+
+#add_definitions( -DRELEASE )
 
 # should remove this include-depending, when correct libsimplecard cmake
 include_directories(/usr/local/include/libsimplecards)

@@ -17,6 +17,11 @@ NetworkController::NetworkController()
 
 NetworkController::~NetworkController()
 {
+    std::map<std::string, RestfulObject*>::iterator it;
+    for(it = m_objects.begin(); it != m_objects.end(); ++it)
+    {
+        delete (*it).second;
+    }
 }
 
 void NetworkController::registerObject(RestfulObject* object)

@@ -93,8 +93,16 @@ void PlayerObject::method_put(std::vector<std::string> restful_data, const std::
     }
 }
 
-void PlayerObject::method_delete(std::vector<std::string>, const std::string&, std::string*)
+void PlayerObject::method_delete(std::vector<std::string> restful_data, const std::string&, std::string*)
 {
     std::cout << "PlayerObject::method_delete" << std::endl;
+    if (restful_data.size() == 3)
+    {
+        AbstractPlayer *player = GameController::instance()->removePlayerFromTable(atoi(restful_data[AbstractPlayer::PlayerId].data()));
+        if (player && player->tokenPut() == restful_data[AbstractPlayer::PlayerToken])
+        {
+            delete player;
+        }
+    }
 }
 

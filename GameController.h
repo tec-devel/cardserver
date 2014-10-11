@@ -31,6 +31,7 @@ public:
     int addTable(cardsrv::AbstractTable*);
     const  cardsrv::AbstractTable* table(int id) const;
     cardsrv::AbstractTable* removeTable(int id);
+    std::map <int, cardsrv::AbstractTable*> tables() const;
     
     bool addPlayerToTable(int player_id, int table_id);
     const cardsrv::AbstractPlayer* const_player(int player_id) const;

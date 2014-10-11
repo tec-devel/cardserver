@@ -12,6 +12,7 @@
 
 #include "PlayerObject.h"
 #include "TableObject.h"
+#include "TablesObject.h"
 
 #define PAGE "<html><head><title>libmicrohttpd demo</title>"\
              "</head><body>libmicrohttpd demo jerry</body></html>"
@@ -20,6 +21,8 @@
 
 #include <iostream>
 #include <sstream>
+
+#include <signal.h>
 
 struct PutData
 {
@@ -93,9 +96,11 @@ static int ahc_echo(void * cls,
             std::string reply;
             std::string request;
             NetworkController::instance()->methodGet(seglist[0], seglist, request, &reply);
-            response = MHD_create_response_from_data(reply.size(), (void*) reply.data(), MHD_NO, MHD_NO);
+
+            response = MHD_create_response_from_data(reply.size(), (void*) reply.data(), MHD_NO, MHD_YES);
+
             ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-            std::cout << reply << std::endl;
+            std::cout << "GET RESPONCE " << reply << std::endl;
         }
         else
         {
@@ -188,8 +193,11 @@ static int ahc_echo(void * cls,
             return MHD_YES;
         }
 
+        std::cout << *upload_data_size << std::endl;
+        if (0 != *upload_data_size)
+            return MHD_NO;
+
         *ptr = NULL; /* clear context pointer */
-        response = MHD_create_response_from_data(strlen(page), (void*) 0, MHD_NO, MHD_NO);
 
         std::cout << "DELETE " << url << std::endl;
         std::vector<std::string> restful_data = parseRestfulData(url);
@@ -197,6 +205,7 @@ static int ahc_echo(void * cls,
         if (!restful_data.empty())
         {
             NetworkController::instance()->methodDelete(restful_data[0], restful_data);
+            response = MHD_create_response_from_data(strlen(page), (void*) page, MHD_NO, MHD_NO);
             ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
         }
         else
@@ -212,10 +221,23 @@ static int ahc_echo(void * cls,
     return ret;
 }
 
+
+static struct MHD_Daemon * d = 0;
+
+#ifdef RELEASE
+
+static bool work = true;
+
+static void sig_handler(int sig)
+{
+    work = false;
+    std::cout << sig << " signal recieved..." << std::endl;
+}
+#endif
+
 int main(int argc,
          char ** argv)
 {
-    struct MHD_Daemon * d;
     if (argc != 2)
     {
         printf("%s PORT\n",
@@ -223,9 +245,22 @@ int main(int argc,
         return 1;
     }
 
+#ifdef RELEASE
+    struct sigaction act;
+    memset(&act, 0, sizeof (act));
+    act.sa_handler = sig_handler;
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, SIGTERM);
+    //    sigaddset(&set, SIGINT);
+    act.sa_mask = set;
+    sigaction(SIGTERM, &act, 0);
+    //   sigaction(SIGINT, &act, 0);
+#endif
 
     NetworkController::instance()->registerObject(new PlayerObject(std::string("player")));
     NetworkController::instance()->registerObject(new TableObject(std::string("table")));
+    NetworkController::instance()->registerObject(new TablesObject(std::string("tables")));
 
     d = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY,
                          atoi(argv[1]),
@@ -234,7 +269,6 @@ int main(int argc,
                          &ahc_echo,
                          (void*) PAGE,
                          MHD_OPTION_END);
-
     //        d = MHD_start_daemon(MHD_USE_THREAD_PER_CONNECTION,
     //                         atoi(argv[1]),
     //                         NULL,
@@ -243,9 +277,23 @@ int main(int argc,
     //                         (void*) PAGE,
     //                         MHD_OPTION_END);
 
+
     if (d == NULL)
         return 1;
-    (void) getchar();
+
+#ifdef RELEASE
+    while (work)
+        usleep(100000);
+#else
+    getchar();
+#endif
+
     MHD_stop_daemon(d);
+
+    delete NetworkController::instance();
+
+    std::cout << "Server successfully stopped." << std::endl;
+
+
     return 0;
 }
