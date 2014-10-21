@@ -41,13 +41,16 @@ static std::vector<std::string> parseRestfulData(const char * url)
         uriFreeUriMembersA(&uri);
     }
 
-    std::stringstream test(uri.pathHead->text.first);
-    std::string segment;
     std::vector<std::string> seglist;
-
-    while (std::getline(test, segment, '/'))
+    if (0 != uri.pathHead)
     {
-        seglist.push_back(segment);
+        std::stringstream test(uri.pathHead->text.first);
+        std::string segment;
+
+        while (std::getline(test, segment, '/'))
+        {
+            seglist.push_back(segment);
+        }
     }
 
     uriFreeUriMembersA(&uri);
@@ -104,8 +107,8 @@ static int ahc_echo(void * cls,
         }
         else
         {
-            response = MHD_create_response_from_data(strlen(page), (void*) page, MHD_NO, MHD_NO);
-            ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
+            response = MHD_create_response_from_data(0, (void*) 0, MHD_YES, MHD_YES);
+            ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
         }
 
 
